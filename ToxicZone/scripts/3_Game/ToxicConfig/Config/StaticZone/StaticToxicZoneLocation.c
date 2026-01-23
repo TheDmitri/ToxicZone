@@ -42,16 +42,16 @@ class StaticToxicZoneLocation
 
 	void AddCratePosition(string name, vector pos, vector ori)
 	{
-		ToxicCratePosition.Insert(new ref CrateLocation(name,pos,ori));
+		ToxicCratePosition.Insert(new CrateLocation(name,pos,ori));
 	}
 
 	void AddParticlePosition(string name, vector pos)
 	{
-		ParticlesPosition.Insert(new ref ParticleListe(name,pos));
+		ParticlesPosition.Insert(new ParticleListe(name,pos));
 	}
 
 	void AddCreatureToList(string name, int max, float probtospawn)
 	{
-		CreatureList.Insert(new ref TZCreature(name,max,probtospawn));
+		CreatureList.Insert(new TZCreature(name,max,probtospawn));
 	}
 }

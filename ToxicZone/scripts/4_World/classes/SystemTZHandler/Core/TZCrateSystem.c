@@ -82,6 +82,24 @@ class TZCrateSystem
 		}
 	}
 
+	// ------------------------------------------------------
+	//  ToxicZone: Fisher–Yates shuffle for loot list
+	//  Ensures fair randomization without affecting logic
+	// ------------------------------------------------------
+	void ShuffleToxicLoot(array<ref LootConfig> arr)
+	{
+		int count = arr.Count();
+		for (int i = count - 1; i > 0; i--)
+		{
+			int r = Math.RandomIntInclusive(0, i);
+
+			// swap arr[i] <-> arr[r]
+			LootConfig tmp = arr[i];
+			arr[i] = arr[r];
+			arr[r] = tmp;
+		}
+	}
+
 	void CreateEzDrop(int maxloot, string container_name,vector v, vector o, string name,int here)
 	{
 		int k,temp;
@@ -97,31 +115,46 @@ class TZCrateSystem
 				k=i;
 			}
 		}
-		for(int l=0;l<GetTZLootConfig().ListLoots.Get(k).Loots.Count();l++)
+		// ------------------------------------------------------
+		//  BUILD AND SHUFFLE LOOT LIST
+		// ------------------------------------------------------
+		ref array<ref LootConfig> shuffled = new array<ref LootConfig>;
+
+		for (int cp = 0; cp < GetTZLootConfig().ListLoots.Get(k).Loots.Count(); cp++)
 		{
-			if(temp>=maxloot && maxloot!=-1)continue;
-			if ( GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).ProbToSpawn > Math.RandomFloatInclusive(0,1) )
+			shuffled.Insert(GetTZLootConfig().ListLoots.Get(k).Loots.Get(cp));
+		}
+		
+		ShuffleToxicLoot(shuffled); // FIX Randomizes the loot order to ensure that all items have an equal chance of spawning, since if the list is large, items at the bottom of the list will spawn less often or even never
+
+		// ------------------------------------------------------
+		//  PROCESS SHUFFLED LOOT LIST
+		// ------------------------------------------------------
+		for (int l = 0; l < shuffled.Count(); l++)
+		{
+			if (maxloot != -1 && temp >= maxloot) // Break avoids unnecessary checks once max loot is reached, improving performance.
+				break;
+
+			if (shuffled[l].ProbToSpawn > Math.RandomFloatInclusive(0, 1))
 			{
-				if (GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).AttachmentsToLoot.Count() == 0)
+				if (shuffled[l].AttachmentsToLoot.Count() == 0)
 				{
-					m_Loot.GetInventory().CreateInInventory(GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).LootName);
-					temp+=1;
-					GetTZLogger().LogInfo(GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).LootName);
+					m_Loot.GetInventory().CreateInInventory(shuffled[l].LootName);
+					temp++;
+					GetTZLogger().LogInfo(shuffled[l].LootName);
 					continue;
 				}
-				else
+				m_Loot.GetInventory().CreateInInventory(shuffled[l].LootName);
+				temp++;
+				GetTZLogger().LogInfo(shuffled[l].LootName);
+
+				for (int parc = 0; parc < shuffled[l].AttachmentsToLoot.Count(); parc++)
 				{
-					m_Loot.GetInventory().CreateInInventory(GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).LootName);
-					temp+=1;
-					GetTZLogger().LogInfo(GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).LootName);
-					for( int parc=0; parc < GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).AttachmentsToLoot.Count() ; parc++)
+					if (shuffled[l].AttachmentsToLoot.Get(parc).ProbAttachToSpawn > Math.RandomFloatInclusive(0, 1))
 					{
-						if ( GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).AttachmentsToLoot.Get(parc).ProbAttachToSpawn > Math.RandomFloatInclusive(0,1) )
-						{
-							m_Loot.GetInventory().CreateInInventory(GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).AttachmentsToLoot.Get(parc).AttachName);
-							temp+=1;
-							GetTZLogger().LogInfo(GetTZLootConfig().ListLoots.Get(k).Loots.Get(l).AttachmentsToLoot.Get(parc).AttachName);
-						}
+						m_Loot.GetInventory().CreateInInventory(shuffled[l].AttachmentsToLoot.Get(parc).AttachName);
+						temp++;
+						GetTZLogger().LogInfo(shuffled[l].AttachmentsToLoot.Get(parc).AttachName);
 					}
 				}
 			}
@@ -187,6 +220,20 @@ class TZCrateSystem
 
 	}
 
+	// BUG: This method incorrectly uses SurfaceY() for positioning, which only returns *terrain* height.
+	// It completely ignores buildings, floors, roofs, bridges or any object surfaces.
+	// As a result, entities spawned inside buildings fall through the floor or appear floating in the air.
+	//
+	// BUG: The original Y offset (pos[1]) is ADDED to the terrain height, causing massive elevation errors.
+	// Example: If a crate position has Y = 450 (building floor), the method does:
+	//     finalY = terrainY + 450
+	// This produces sky-high positions and creates "floating" spawns.
+	//
+	// In short:
+	//   - SurfaceY() = ground only → ignores real surfaces
+	//   - pos[1] added again → double height and sky spawns
+	//   - causes wolves and crates to spawn in the air or fall through buildings.
+	/*
 	private vector snapToGround(vector pos)
     {
         float pos_x = pos[0];
@@ -197,4 +244,46 @@ class TZCrateSystem
 
         return tmp_pos;
     }
+	*/
+
+	// FIXED VERSION:
+	// This improved snapToGround() uses a downward RaycastRV to detect the real surface
+	// (floor, roof, platform, bridge, object collision, etc.) instead of relying on SurfaceY()
+	// which only returns terrain height.
+	//
+	// RaycastRV provides accurate collision with any world geometry, allowing entities to spawn
+	// properly on interior floors and elevated structures without falling through or floating.
+	//
+	// Behavior:
+	//   1. Casts a ray slightly above the target position downwards.
+	//   2. If a collision is found (floor, roof, object surface), the hit position is returned.
+	//   3. If nothing is hit, falls back to terrain height via SurfaceY().
+	//
+	// Advantages:
+	//   - Correctly handles multi-floor buildings.
+	//   - Prevents "sky spawn" caused by wrong Y offsets.
+	//   - Prevents crates and creatures spawning inside geometry or below floors.
+	//   - Much more consistent and accurate than the old SurfaceY() method.
+	//
+	private vector snapToGround(vector pos)
+	{
+		vector from = pos + "0 1 0";     // start slightly above
+		vector to   = pos + "0 -5 0";    // cast downwards
+
+		vector hitPos;
+		vector hitNormal;
+		int comp;
+
+		// Raycast to detect actual geometry surface
+		if (DayZPhysics.RaycastRV(from, to, hitPos, hitNormal, comp))
+		{
+			return hitPos;
+		}
+
+		// Fallback for open terrain or failed raycast
+		float ground = GetGame().SurfaceY(pos[0], pos[2]);
+		return Vector(pos[0], ground, pos[2]);
+	}
 }
+
+

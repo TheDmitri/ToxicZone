@@ -1,5 +1,5 @@
 enum ToxicAgents
 {
 	//agent list
-	TOXICSICKNESS		= 1098;
-}
+	TOXICSICKNESS		= 1098
+};

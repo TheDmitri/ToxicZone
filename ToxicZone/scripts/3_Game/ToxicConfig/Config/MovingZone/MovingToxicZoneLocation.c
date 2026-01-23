@@ -33,18 +33,50 @@ class MovingToxicZoneLocation
     		Norme = DoNorm();
      }
 
+	/*
+	// BUG: Y-difference is assigned into X, overwriting the X calculation and leaving Y uninitialized.
+	// This breaks the distance calculation because X gets replaced by the Y delta,
+	// and Y may remain zero or garbage depending on the condition.
 	int DoNorm()
 	{
-		private int X,Y;
-		if(StartX>EndX)
+		private int X, Y;
+
+		if (StartX > EndX)
 		{
-			X=StartX-EndX;
-		}else X=EndX-StartX;
-		if(StartY>EndY)
+			X = StartX - EndX;
+		}
+		else 
+			X = EndX - StartX;
+
+		// BUG was here in the original code (X = StartY - EndY instead of Y)
+		if (StartY > EndY)
 		{
-			X=StartY-EndY;
-		}else Y=EndY-StartY;
-		return Math.Sqrt(Math.Pow(X,2)+Math.Pow(Y,2));
+			Y = StartY - EndY;
+		}
+		else 
+			Y = EndY - StartY;
+
+		return Math.Sqrt(Math.Pow(X, 2) + Math.Pow(Y, 2));
+	}
+	*/
+	
+	int DoNorm()
+	{
+		private int X, Y;
+		if (StartX > EndX)
+		{
+			X = StartX - EndX;
+		}
+		else 
+			X = EndX - StartX;
+		if (StartY > EndY)
+		{
+			Y = StartY - EndY;
+		}
+		else 
+			Y = EndY - StartY;
+		return Math.Sqrt(Math.Pow(X, 2) + Math.Pow(Y, 2));
 	}
 
 }
+

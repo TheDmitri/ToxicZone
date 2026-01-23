@@ -15,7 +15,7 @@ class StaticToxicZoneLocationsClient
   ref array<bool> IsOnlyGasMask;
 
 
-    void StaticToxicZoneLocationsClient(ref array<ref StaticToxicZoneLocation> temp_staticToxicZoneLocation)
+    void StaticToxicZoneLocationsClient(array<ref StaticToxicZoneLocation> temp_staticToxicZoneLocation)
 	  {
       IsMsgActive = new array<bool>;
       Statut = new array<string>;
@@ -34,7 +34,7 @@ class StaticToxicZoneLocationsClient
       TransferToxicConfig(temp_staticToxicZoneLocation);
     }
 
-    void TransferToxicConfig(ref array<ref StaticToxicZoneLocation> temp_staticToxicZoneLocation)
+    void TransferToxicConfig(array<ref StaticToxicZoneLocation> temp_staticToxicZoneLocation)
     {
       int cpt = -1 + temp_staticToxicZoneLocation.Count();
       for(int i = 0; i<=cpt ; i++)

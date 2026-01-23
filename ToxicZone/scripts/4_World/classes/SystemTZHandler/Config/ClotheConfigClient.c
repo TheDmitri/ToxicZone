@@ -4,7 +4,7 @@ class TZClotheConfigTemp
   ref array<string> ClothesNames;
   ref array<int> Protection;
 
-  void TZClotheConfigTemp(int i, ref TZClotheProtectionSettings m_config)
+  void TZClotheConfigTemp(int i, TZClotheProtectionSettings m_config)
   {
     SlotName = m_config.TZListSlotProtection.Get(i).SlotName;
     ClothesNames = new array<string>;

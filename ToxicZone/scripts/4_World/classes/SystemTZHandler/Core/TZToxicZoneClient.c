@@ -202,24 +202,79 @@ class TZToxicZoneClient
         }
     }
 
-    float GetProtectionLevel(EntityAI attch, int i, string slotname)
-    {
-      int protection = 0;
-      if(!attch || attch.IsRuined())return 0;
-      if(slotname == "Mask" && attch.GetCompEM().IsWorking())return 1;
-      for(int j=0;j<GetTZClothesConfigClient().TZListSlotProtection.Get(i).ListProtections.Count();j++)
-      {
-        if(attch.IsKindOf(GetTZClothesConfigClient().TZListSlotProtection.Get(i).ListProtections.Get(j).ClotheName))
-        {
-            protection = GetTZClothesConfigClient().TZListSlotProtection.Get(i).ListProtections.Get(j).Protection;
-            #ifdef TZDEBUG
-            GetTZLogger().LogInfo("GetProtectionLevel: protection"+protection.ToString());
-            #endif
-            return protection;
-        }
-      }
-      return protection;
-    }
+	int GetMaskProtection(ItemBase mask)
+	{
+	    if (!mask)
+	        return 0;
+	
+	    //--------------------------------------------------------------------
+	    // CASE 1 — Masks with internal quantity (GP5-style)
+	    //--------------------------------------------------------------------
+	    if (mask.HasQuantity())
+	    {
+	        if (mask.GetQuantity() > 0)
+	            return 1;
+	        else
+	            return 0;
+	    }
+	    //--------------------------------------------------------------------
+	    // CASE 2 — Masks with detachable filter (priority over EM)
+	    //--------------------------------------------------------------------
+	    ItemBase filter = ItemBase.Cast(mask.FindAttachmentBySlotName("GasMaskFilter"));
+	    if (filter) // mask supports filter
+	    {
+	        if (filter.GetQuantity() > 0)
+	            return 1;  // filter OK
+	        else
+	            return 0;  // filter empty
+	    }
+	    //--------------------------------------------------------------------
+	    // CASE 3 — Battery-powered respirators (no filter)
+	    //--------------------------------------------------------------------
+	    ComponentEnergyManager em = mask.GetCompEM();
+	    if (em)
+	    {
+	        if (em.IsWorking())
+	            return 1;  // battery module OK
+	        else
+	            return 0;  // battery dead
+	    }
+	    //--------------------------------------------------------------------
+	    // CASE 4 — Not a protective mask at all
+	    //--------------------------------------------------------------------
+	    return 0;
+	}
+
+	float GetProtectionLevel(EntityAI attch, int i, string slotname)
+	{
+	    if (!attch || attch.IsRuined())
+	        return 0;
+	    // ---------------------------------------------------------------------
+	    // MASK SPECIAL HANDLING
+	    // ---------------------------------------------------------------------
+	    if (slotname == "Mask")
+	    {
+	        ItemBase mask = ItemBase.Cast(attch);
+	        return GetMaskProtection(mask);  // <-- moved into separate method
+	    }
+	    for (int j = 0; j < GetTZClothesConfigClient().TZListSlotProtection.Get(i).ListProtections.Count(); j++)
+	    {
+	        if (attch.IsKindOf(GetTZClothesConfigClient().TZListSlotProtection.Get(i).ListProtections.Get(j).ClotheName))
+	        {
+	            int protection = GetTZClothesConfigClient().TZListSlotProtection.Get(i).ListProtections.Get(j).Protection;
+	
+	            #ifdef TZDEBUG
+	            GetTZLogger().LogInfo("GetProtectionLevel: protection=" + protection.ToString());
+	            #endif
+	
+	            return protection;
+	        }
+	    }
+	    // Old code used "return protection", but protection was always initialized to 0.
+	    // Returning 0 explicitly is safer and clearer:
+	    // it shows that an item NOT found in the protection list gives NO protection.
+	    return 0;
+	}
 
     void GetToxicConfigResponse(CallType type,  ParamsReadContext ctx,  PlayerIdentity sender,  Object target)
     {
@@ -254,3 +309,4 @@ class TZToxicZoneClient
       GetRPCManager().SendRPC("TZToxicZone", "GetSickQtyToGive", new Param1<float>(toxictogive), true);
     }
 };
+
