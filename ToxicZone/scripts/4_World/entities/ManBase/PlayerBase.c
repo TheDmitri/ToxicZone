@@ -69,7 +69,10 @@ modded class PlayerBase extends ManBase
 			{
 				EntityAI SuitsPart;
 				SuitsPart = this.FindAttachmentBySlotName(m_SLOTS.Get(i));
-				if(SuitsPart == NULL || SuitsPart.IsRuined())return;
+				if (SuitsPart == NULL || SuitsPart.IsRuined())
+				{
+					continue; // Do not exit the method; just skip this slot and continue processing
+				}
 				float Health = SuitsPart.GetMaxHealth();
 				#ifdef TZDEBUG
 				GetTZLogger().LogInfo("SuitsPart:"+SuitsPart.GetType()+"Max health:"+Health.ToString());
@@ -138,3 +141,4 @@ modded class PlayerBase extends ManBase
 	}*/
 
 }
+
