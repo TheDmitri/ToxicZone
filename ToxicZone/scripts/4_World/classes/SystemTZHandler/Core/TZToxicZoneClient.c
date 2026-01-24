@@ -190,15 +190,19 @@ class TZToxicZoneClient
       }
     }
 
-    void ClothesCheckClient(PlayerBase player)
+	void ClothesCheckClient(PlayerBase player)
     {
-        ClothesProtection=0;
-        for (int i = 0; i <GetTZClothesConfigClient().TZListSlotProtection.Count() ;i++)
+        ClothesProtection = 0;
+        int count = GetTZClothesConfigClient().TZListSlotProtection.Count();
+        for (int i = 0; i < count; i++)
         {
-          EntityAI SuitsPart;
-          string slotname = GetTZClothesConfigClient().TZListSlotProtection.Get(i).SlotName;
-          SuitsPart = player.FindAttachmentBySlotName(slotname);
-          ClothesProtection += GetProtectionLevel(SuitsPart, i, slotname);
+            string slotname = GetTZClothesConfigClient().TZListSlotProtection.Get(i).SlotName;
+            if (IsOnlyGasMask && slotname != "Mask")
+            {
+                continue;
+            }
+            EntityAI SuitsPart = player.FindAttachmentBySlotName(slotname);
+            ClothesProtection += GetProtectionLevel(SuitsPart, i, slotname);
         }
     }
 
@@ -309,4 +313,5 @@ class TZToxicZoneClient
       GetRPCManager().SendRPC("TZToxicZone", "GetSickQtyToGive", new Param1<float>(toxictogive), true);
     }
 };
+
 
