@@ -58,6 +58,7 @@ class LootTZSettings{
 	}
 
 	void LootTZSettingsDefaultSettings()	{
+		if (!GetGame().IsServer()) return;
 		IsActive=1;
 		TimerLoot=2700000;
 		ListLoots.Insert(new ListLootConfig("Army1"));
@@ -112,12 +113,15 @@ class LootTZSettings{
 
 	void Save()
 	{
+		if (!GetGame().IsServer()) return;
 		JsonFileLoader<LootTZSettings>.JsonSaveFile(TZ_LOOT_CONFIG, this);
 	}
 
 	static ref LootTZSettings Load()	{
 		ref LootTZSettings settings = new LootTZSettings();
 
+		if (!GetGame().IsServer()) return settings;
+		
 		if (FileExist(TZ_OLD_LOOT_CONFIG)) {
 			JsonFileLoader<LootTZSettings>.JsonLoadFile(TZ_OLD_LOOT_CONFIG, settings);
 			settings.Save();
@@ -135,3 +139,4 @@ class LootTZSettings{
 		return settings;
 	}
 }
+
