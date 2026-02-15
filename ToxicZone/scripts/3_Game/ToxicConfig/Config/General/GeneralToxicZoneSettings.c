@@ -7,7 +7,8 @@ class GeneralToxicZoneSettings
 	int 			NbSickGivenforToxicSmoke;
 
 	void DefaultConfig()
-	{
+	{	
+		if (!GetGame().IsServer()) return;
 		ToxicBloodLoss = 5;
 	  NbSickGiven = 34;
 		SuitsDamage = 20;
@@ -18,11 +19,13 @@ class GeneralToxicZoneSettings
 
 	void Save()
 	{
+		if (!GetGame().IsServer()) return;
 		JsonFileLoader<GeneralToxicZoneSettings>.JsonSaveFile(TZ_GNRL_CONFIG, this);
 	}
 
 	void AdaptConfig()
 	{
+		if (!GetGame().IsServer()) return;
 		if(ToxicBloodLoss == 5)
 		{
 			ToxicBloodLoss = 50;
@@ -32,7 +35,7 @@ class GeneralToxicZoneSettings
 
 	static ref GeneralToxicZoneSettings Load()	{
 		ref GeneralToxicZoneSettings settings = new GeneralToxicZoneSettings();
-
+		if (!GetGame().IsServer()) return settings; 
 		if ( !FileExist( TZ_CONFIG_ROOT_SERVER ) )
 		{
 			MakeDirectory( TZ_CONFIG_ROOT_SERVER );
@@ -57,3 +60,4 @@ class GeneralToxicZoneSettings
 		return settings;
 	}
 }
+
