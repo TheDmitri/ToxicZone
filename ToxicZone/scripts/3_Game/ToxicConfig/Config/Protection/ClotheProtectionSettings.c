@@ -9,6 +9,8 @@ class TZClotheProtectionSettings
 
 	void ClotheProtectionDefaultSettings()
 	{
+		if (!GetGame().IsServer()) return;
+		
 		RequiredProtection = 6;
 		TZListSlotProtection.Insert(new  TZSlotProtection("Mask"));
 		TZListSlotProtection.Get(0).AddTZProtectiveClothe("GP5GasMask",0);
@@ -42,6 +44,8 @@ class TZClotheProtectionSettings
 	static ref TZClotheProtectionSettings Load()	{
 		 TZClotheProtectionSettings settings = new TZClotheProtectionSettings();
 
+		if (!GetGame().IsServer()) return settings;
+
 		if ( !FileExist( TZ_CONFIG_ROOT_SERVER ) )
 		{
 			MakeDirectory( TZ_CONFIG_ROOT_SERVER );
@@ -65,3 +69,4 @@ class TZClotheProtectionSettings
 		return settings;
 	}
 };
+
