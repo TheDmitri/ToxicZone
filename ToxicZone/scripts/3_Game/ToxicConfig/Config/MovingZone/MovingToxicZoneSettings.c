@@ -12,6 +12,7 @@ class MovingToxicAreaSettings
 
 	void DefaultConfig()
 	{
+		if (!GetGame().IsServer()) return;
 		IsMovingZoneActive=true;
 		AdminUID.Insert("76561198047475641");
 		MovingToxicAreaLocation.Insert(new MovingToxicZoneLocation(50,true,"You're in a toxic area","You're in a toxic area",0.25,1,"GreenSmokeLong","ZelenToNovy",30,2000,5000,7442,8330,170));
@@ -20,12 +21,15 @@ class MovingToxicAreaSettings
 
 	void Save()
 	{
+		if (!GetGame().IsServer()) return;
 		JsonFileLoader<MovingToxicAreaSettings>.JsonSaveFile(TZ_MZ_CONFIG, this);
 	}
 
 	static ref MovingToxicAreaSettings Load()	{
 		MovingToxicAreaSettings settings = new MovingToxicAreaSettings();
-
+		
+		if (!GetGame().IsServer()) return settings;
+		
 		if ( !FileExist( TZ_CONFIG_ROOT_SERVER ) )
 		{
 			MakeDirectory( TZ_CONFIG_ROOT_SERVER );
@@ -46,3 +50,4 @@ class MovingToxicAreaSettings
 		return settings;
 	}
 }
+
