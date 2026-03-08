@@ -9,6 +9,8 @@ class StaticToxicAreaSettings
 
 	void StaticDefaultConfig()
 	{
+		if (!GetGame().IsServer()) return;
+		
 		IsToxicZoneActive = true;
 		StaticToxicAreaLocation = new array<ref StaticToxicZoneLocation>;
 		StaticToxicAreaLocation.Insert(new StaticToxicZoneLocation("TZKamensk", 7890, 14697, 300, -1,-1,-1,-1,false,false,true,"ToxicCase",1,8));
@@ -81,12 +83,16 @@ class StaticToxicAreaSettings
 
 	void Save()
 	{
+			if (!GetGame().IsServer()) return;
+		
 			JsonFileLoader<StaticToxicAreaSettings>.JsonSaveFile(TZ_STATIC_CONFIG, this);
 	}
 
 	static ref StaticToxicAreaSettings Load()	{
 		 StaticToxicAreaSettings settings = new StaticToxicAreaSettings();
-
+		
+		if (!GetGame().IsServer()) return settings;
+		
 		if ( !FileExist( TZ_CONFIG_ROOT_SERVER ) )
 		{
 			MakeDirectory( TZ_CONFIG_ROOT_SERVER );
@@ -111,3 +117,4 @@ class StaticToxicAreaSettings
 		return settings;
 	}
 }
+
