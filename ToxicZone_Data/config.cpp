@@ -1,12 +1,3 @@
-////////////////////////////////////////////////////////////////////
-//DeRap: config.bin
-//Produced from mikero's Dos Tools Dll version 9.10
-//https://mikero.bytex.digital/Downloads
-//'now' is Thu Jul 03 08:34:40 2025 : 'file' last modified on Thu Jul 03 08:34:40 2025
-////////////////////////////////////////////////////////////////////
-
-#define _ARMA_
-
 class CfgPatches
 {
 	class ToxicZone_Data_Script
@@ -71,10 +62,12 @@ class CfgVehicles
 			};
 		};
 	};
-	class Clothing;
+	class Clothing_Base;
+	class Clothing: Clothing_Base
+	{
+	};
 	class GP5GasMask: Clothing
 	{
-		attachments[] = {"GasMaskFilter"};
 		class EnergyManager
 		{
 			autoSwitchOff = 1;
@@ -411,3 +404,4 @@ class CfgVehicles
 		hiddenSelectionsTextures[] = {"ToxicZone_Data\data\NBC\Gloves_green.paa","ToxicZone_Data\data\NBC\Gloves_green.paa","ToxicZone_Data\data\NBC\Gloves_green.paa"};
 	};
 };
+
